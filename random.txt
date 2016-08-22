@@ -1,0 +1,206 @@
+package structure:
+
+com.runbook.config
+	ApplicationConfig
+	DatabaseConfig
+com.runbook.dao
+	CredentialValidatorDaoImpl
+	CredentialValidatorMapper
+	ICredentialValidatorDao
+com.runbook.domain
+	Validator
+com.runbook.svcs
+	ICredentialValidatorSvcs
+	ICredentialValidtorImpl
+com.runbook.utility
+	validationUility
+
+/******************************************************/
+DatabaseConfig.java
+--------------------------------
+package com.runbook.config;
+
+import javax.sql.DataSource;
+
+import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.apache.ibatis.transaction.TransactionFactory;
+import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+
+public class DatabaseConfig {
+	
+	private String username;
+	private String password;
+	private String connectionString;
+	private String databaseDriver;
+	
+	private DataSource dataSource;
+	private TransactionFactory transactionFactory;
+	private Environment environment;
+	private Configuration configuration;
+	private SqlSessionFactory sqlSessionFactory;
+	
+	private DatabaseConfig(String databaseDriver, String connectionString, String username, String password)
+	{
+		this.databaseDriver = databaseDriver;
+		this.connectionString = connectionString;
+		this.username = username;
+		this.password = password;
+		
+		dataSource = new org.apache.ibatis.datasource.pooled.PooledDataSource(this.databaseDriver, this.connectionString, this.username, this.password);
+		transactionFactory = new JdbcTransactionFactory();
+		environment = new Environment("development",transactionFactory, dataSource);
+		configuration = new Configuration( environment );
+		sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
+	}
+	
+	public static DatabaseConfig createDatabaseConfiguration(String databaseDriver, String connectionString, String username, String password)
+	{
+		return new DatabaseConfig(databaseDriver, connectionString, username, password);
+	}
+	public void addMapper(Class newMapper)
+	{
+		configuration.addMapper(newMapper);
+		sqlSessionFactory = new SqlSessionFactoryBuilder().build(configuration);
+	}
+	public SqlSession getSession()
+	{
+		return sqlSessionFactory.openSession();
+	}
+	
+}
+----------------------------------------------------------------------------------------------------------
+CredentialValidatorDaoImp.java
+---------------------------------------------
+package com.runbook.dao;
+
+import java.io.IOException;
+
+import org.apache.ibatis.session.SqlSession;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.runbook.config.DatabaseConfig;
+import com.runbook.domain.User;
+
+public class CredentialValidatorDaoImpl implements ICredentialValidatorDao{
+	
+	CredentialValidatorMapper validatorMapper;
+	DatabaseConfig config;
+	
+	public CredentialValidatorDaoImpl()
+	{
+		config = DatabaseConfig.createDatabaseConfiguration("com.mysql.jdbc.Driver", 
+				"jdbc:mysql://localhost:3306/contentmanager", "root" , "desilva5" );
+		config.addMapper(CredentialValidatorMapper.class);
+	}
+	
+	public String getStoredHash(String SID)
+	{
+		SqlSession session = config.getSession();
+		validatorMapper = session.getMapper(CredentialValidatorMapper.class);
+		String storedHash = validatorMapper.getStoredHash(SID);
+		session.close();
+		
+		return storedHash;
+	}
+	public User getUser(String SID)
+	{
+		User newUser = null;
+		SqlSession session = config.getSession();
+		validatorMapper = session.getMapper(CredentialValidatorMapper.class);
+		newUser = validatorMapper.getUser(SID);
+		return newUser;
+	}
+	
+	public static void main(String[] args) throws JsonGenerationException, JsonMappingException, IOException
+	{
+		/*CredentialValidatorDaoImpl imp = new CredentialValidatorDaoImpl();
+		System.out.println( imp.getStoredHash("jb"));*/
+		ObjectMapper mapper = new ObjectMapper();
+		User user = new User("Anton", "Desilva", "adesilva@gmail.com", "username", "password");
+		System.out.println( mapper.writeValueAsString(user));		
+	}
+}
+-------------------------------------------------------------------------------------
+CredentialValidatorMapper
+-----------------------------------------
+package com.runbook.dao;
+
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.Results;
+import org.apache.ibatis.annotations.Select;
+
+import com.runbook.domain.User;
+
+public interface CredentialValidatorMapper {
+	
+	@Select("SELECT password FROM cm_users WHERE userName = #{SID}")
+	public String getStoredHash(String SID);
+	
+	/*DOES NOT BELONG - REFACTOR*/
+	@Select("SELECT * FROM cm_users WHERE username = #{SID}")
+	@Results({
+		@Result(column="firstName", property="firstName"),
+		@Result(column="lastName", property="lastName"),
+		@Result(column="email", property="email"),
+		@Result(column="userName", property="username"),
+		@Result(column="password", property="password"),
+	})
+	public User getUser(String SID);
+
+}
+--------------------------------------------------------------------------------------
+CredentialValidatorSvcsImp
+----------------
+package com.runbook.svcs;
+
+import java.io.IOException;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.runbook.dao.CredentialValidatorDaoImpl;
+import com.runbook.domain.Validator;
+
+
+@Path("/validation")
+public class CredentialValidatorSvcsImpl implements ICredentialValidatorSvcs {
+
+	
+	@Path("{sid}/{password}")
+	@GET
+	@Produces("application/JSON")
+	public String isValidUser(@PathParam("sid") String sid ,@PathParam("password") String password){
+		System.out.println("************"+  sid + " " + password);
+		
+		if(Validator.createValidator(sid, password).isUserValid())
+			return "true";//"{isValidCredentials: [ true ]}";
+		else
+			return "false";//"{isValidCredentials: [ false ]}";
+	}
+	
+	@Path("{sid}")
+	@GET
+	@Produces("application/JSON")
+	public String getUser(@PathParam("sid") String sid) throws JsonGenerationException, IOException{
+		
+		String userAsJson = null;
+		ObjectMapper mapper = new ObjectMapper();
+		userAsJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(new CredentialValidatorDaoImpl().getUser(sid));
+		return userAsJson;
+	}
+
+}
+--------------------------------------------------------------------------
