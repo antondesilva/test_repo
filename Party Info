@@ -40,3 +40,66 @@ Includes Spicy Buffalo Wings & Blue Cheese, Angus Beef Sliders, Fries
 Ask about adding on Ice Cold Beer Towers for Just $10pp
 
 $39.95pp X 40 = $1600
+----------------------------------------------------------------------------------------------------------------------
+Ext.onReady( function() {
+	var board = new Ext.Component({
+		renderTo : Ext.getBody(),
+		html : "<table border=1px><tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td></tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td></tr><tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp&nbsp</td><td>&nbsp&nbsp&nbsp&nbsp</td></tr></table>",
+		width : 600,
+		height : 100,
+		style : {
+			backgroundColor : '#fec',   
+			borderRadius : '5px',
+			padding : '5px'
+		},
+		initComponent: function()
+		{
+			
+			this.callParent(arguments);
+		},
+		generateFretBoard : function( var fretboardModel )
+		{
+			//Generate an HTML representation
+			//Associate the frets of the instruments with a set of sounds
+		}
+	});
+	public enum INSTRUMENT {
+		BASS, GUITAR, GUITAR_12, VIOLIN, VIOLA, CLASSICAL_BASS
+	};
+	public class FretBoardModel {
+		private Instrument instrument = INSTRUMENT.BASS;
+		private String tuning = "EADGBe"; //Listed from top to bottom with 'Standard' tuning
+		private int fretCount = 12;
+		private int stringCount = 6;
+		
+		private String noteMatrix[][];
+		private Midi soundMatrix[][];
+		
+		public FretBoardModel()
+		{
+			
+		}
+		
+		public void changeTuning( String tuning )
+		{
+			if(tuning.equals(tuning.getTuning() ) )
+				return;
+			this.tuninig = tuning;
+			noteMatrix = generateNodeMatrix( this.tuning );
+			soundMatrix = generateSoundMatrix( this.noteMatrix );
+		}
+		
+		private String[][] generateNoteMatrix(String tuning)
+		{
+		
+		}
+		private Midi[][] generateSoundMatrix(String[][] noteMatrix )
+		{
+		}
+	}
+	
+	var fret = new Ext.Component({
+		renderTo : Ext.getBody(),
+		width
+	});
+});
