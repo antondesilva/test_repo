@@ -1,0 +1,104 @@
+Ext.define('Sandbox.view.Foo', {
+	extend : 'Ext.panel.Panel',
+	title : 'Foo',
+	xtype : 'fooPanel',
+	width : 500,
+	height : 500,
+	layout : 'border',
+	initComponent : function() {
+
+		this.middlePanel = Ext.widget('panel', {
+			title : 'Middle',
+			region : 'center',
+			width : 200,
+			items : [
+				{
+					xtype : 'button',
+					text : 'Package A',
+					listeners : {
+						scope : this,
+						click : function()
+						{
+							this.eastPanel.addItems(this.packageA);
+						}
+					},
+				},
+				{
+					xtype : 'button',
+					text : 'Package B',
+					listeners : {
+						scope : this,
+						click : function()
+						{
+							this.eastPanel.addItems(this.packageB);
+						}
+					}
+				}
+			]
+		});
+
+		this.eastPanel = Ext.widget('panel', {
+			title : 'East',
+			region : 'east',
+			width : 300,
+			collapsible : true,
+			items : [
+				
+			],
+			addItems : function( widget )
+			{
+				widget.getForm().reset();
+				this.removeAll(false);
+				this.add(widget);
+				this.doLayout();
+			}
+		});
+
+		this.packageA = Ext.widget('form', {
+			items : [
+				{
+					xtype : 'combo',
+					fieldLabel : 'Subjects',
+					store : [ 'Math', 'Science', 'History', 'English'],
+					margin : '10 0 0 0',
+					allowBlank : false
+				},
+				{
+					xtype : 'button',
+					text : 'Choose',
+					formBind : true
+				}
+			]
+		});
+
+		this.packageB = Ext.widget('form', {
+			items : [
+				{
+					xtype : 'textareafield',
+					fieldLabel : 'Name',
+					margin : '10 0 0 0',
+					allowBlank : false
+				},
+				{
+					xtype : 'combo',
+					fieldLabel : 'Locations',
+					margin : '10 0 0 0',
+					allowBlank : false,
+					store : ["Brooklyn", "Queens", "Manhattan", "Staten Island", "The Bronx"]
+				},
+				{
+					xtype : 'button',
+					text : 'Submit',
+					formBind : true
+				}
+			]
+		});
+
+		this.items = [
+			this.middlePanel,
+			this.eastPanel
+		]
+
+		this.callParent(arguments);
+	}
+});
