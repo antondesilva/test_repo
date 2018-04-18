@@ -204,3 +204,110 @@ public class CredentialValidatorSvcsImpl implements ICredentialValidatorSvcs {
 
 }
 --------------------------------------------------------------------------
+
+<!DOCTYPE html>
+<html>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<script type="text/javascript" src="snackOrder.js"></script>
+	<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<body ng-app="myApp" ng-controller="orderCtrl" align="center">
+	<div class="page-header">
+  		<h1></h1>
+	</div>
+	<p>Get Order</p>
+	<div>
+		<label>Budget($):</label> <input type="text" ng-pattern="moneyPattern" ng-model="budget" placeholder="ex. 134.54">
+		<button ng-click="getOrder()" class="btn btn-primary">Get Order</button>
+	</div>
+	<div align="center">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Store</th>
+					<th>Price</th>
+					<th>Quantity</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="orderItem in orderItems">
+					<td>{{ orderItem.order.name }}</td>
+					<td>{{ orderItem.order.store }}</td>
+					<td>{{ orderItem.order.price }}</td>
+					<td>{{ orderItem.quantity }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
+
+
+//JS
+
+var app = angular.module('myApp', []);
+app.controller('orderCtrl', function($scope, $http) {
+	$scope.budget = 0.0;
+	$scope.orderItems = [];
+	$scope.getOrder = function()
+	{
+		$http.get("/orderResponse.json", {
+			params : 10
+		}).then( function( response ) {
+			console.log( response );
+			$scope.orderItems = response.data.orderItems;
+			console.log( $scope.orderItems );
+		});
+	}
+	$scope.moneyPattern = /^\d+$/;
+});
+
+//---------------------------------------------
+
+{
+	"preference" : 330,
+	"total" : 164.34,
+	"orderItems" : [
+		{
+			"quantity" : 2,
+			"order" : {
+				"name" : "Product A",
+				"store" : "Store A",
+				"price" : 123
+			}
+		},
+		{
+			"quantity" : 4,
+			"order" : {
+				"name" : "Product C",
+				"store" : "Store E",
+				"price" : 45
+			}
+		},
+		{
+			"quantity" : 6,
+			"order" : {
+				"name" : "Product D",
+				"store" : "Store E",
+				"price" : 45
+			}
+		},
+		{
+			"quantity" : 9,
+			"order" : {
+				"name" : "Product A",
+				"store" : "Store H",
+				"price" : 45
+			}
+		},
+		{
+			"quantity" : 1,
+			"order" : {
+				"name" : "Product F",
+				"store" : "Store G",
+				"price" : 45
+			}
+		}
+	]
+}
