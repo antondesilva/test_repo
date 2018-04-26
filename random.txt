@@ -311,3 +311,344 @@ app.controller('orderCtrl', function($scope, $http) {
 		}
 	]
 }
+
+------------------------------------
+
+
+Ext.define('DeleteThis.view.main.Main', {
+    extend: 'Ext.panel.Panel',
+    xtype: 'app-main',
+
+    requires: [
+        'Ext.plugin.Viewport',
+
+        'DeleteThis.view.main.MainController',
+        'DeleteThis.view.main.MainModel',
+        'DeleteThis.view.main.List',
+        'DeleteThis.view.main.MyComponent'
+    ],
+
+    controller: 'main',
+    viewModel: {
+        data : {
+            naturalizationStatus : null,
+            country : null,
+            state : null,
+            county : null
+        },
+        formulas : {
+            isFormValid : function( get )
+            {
+                //debugger;
+                var nat = get('naturalizationStatus')   
+                var result =   !Ext.isEmpty( get('naturalizationStatus') ) &&
+                        !Ext.isEmpty( get('country') ) &&
+                        !Ext.isEmpty( get('state') ) &&
+                        !Ext.isEmpty( get('county') ); 
+                return result;
+            }
+        },
+        stores : {
+            countryStore : {
+                fields : [
+                    'name',
+                    'value'
+                ],
+                data : [ {
+                                name : 'NY',
+                                value : 1
+                            }]
+            }
+        }
+    },
+    items: [],
+    initComponent : function()
+    {
+        var me = this;
+
+        var myForm = Ext.widget('form',{
+            title : 'Registration',
+            bodyPadding : 10,
+            defaults : {
+                afterLabelTextTpl : '<span style="color:red;">*</span>',
+                allowBlank : false,
+                editable : false
+            },
+            items : [
+                {
+                    xtype : 'radiogroup',
+                    fieldLabel : 'Naturalization Status',
+                    preventMark : false,
+                    items : [
+                        {
+                            boxLabel : 'US Citizen',
+                            name : 'naturalizationStatus',
+                            inputValue : 'us_citizen'
+                        },
+                        {
+                            boxLabel : 'Immigrant',
+                            name : 'naturalizationStatus',
+                            inputValue : 'immigrant'
+                        },
+                        {
+                            boxLabel : 'Ilegal Alien',
+                            name : 'naturalizationStatus',
+                            inputValue : 'illegal'
+                        }
+                    ],
+                    bind : {
+                        value : '{naturalizationStatus}'
+                    }
+                },
+                {
+                    xtype : 'datefield',
+                    fieldLabel : 'Travel Date',
+                    listeners : {
+                        select : 'onDateSelect'
+                    }
+                },
+                {
+                    xtype : 'combo',
+                    fieldLabel : 'Country',
+                    displayField : 'name',
+                    valueField : 'name',
+                    bind : {
+                        store : '{countryStore}',
+                        value : '{country}'
+                    },
+                    listeners : {
+                        change : function(combo, newValue)
+                        {
+                            if(Ext.isEmpty(newValue))
+                                me.getViewModel().set('country', null);
+                        }
+                    }
+                },
+                {
+                    xtype : 'combo',
+                    fieldLabel : 'State',
+                    displayField : 'name',
+                    valueField : 'name',
+                    store : {
+                        data : [
+                            {
+                                name : 'NY',
+                                value : 1
+                            },
+                            {
+                                name : 'TX',
+                                value : 2
+                            },
+                            {
+                                name : 'CA',
+                                value : 3
+                            }
+                        ]
+                    },
+                    bind : {
+                        value : '{state}'
+                    }
+                },
+                {
+                    xtype : 'combo',
+                    fieldLabel : 'County',
+                    displayField : 'name',
+                    valueField : 'name',
+                    store : {
+                        data : [
+                            {
+                                name : 'Queens',
+                                value : 1
+                            },
+                            {
+                                name : 'Brooklyn',
+                                value : 2
+                            },
+                            {
+                                name : 'Staten Island',
+                                value : 3
+                            }
+                        ]
+                    },
+                    bind : {
+                        value : '{county}'
+                    }
+                }
+            ],
+            buttons : [
+                {
+                    text : 'Submit',
+                    /*bind : {
+                        disabled : '{!isFormValid}'
+                    },*/
+                    formBind : true,
+                    handler : function(btn)
+                    {
+                        console.log( btn.up('form').getValues() );
+                    }
+                }
+            ]
+        });
+        
+
+        me.items = [
+            myForm
+        ];
+        this.callParent( arguments );
+    },
+    onclick : function()
+    {
+        // debugger;
+        // var me = this;
+        // var x = Ext.widget('window',{
+        //     height : 400,
+        //     width : 500,
+        //     bind : {
+        //         title : '{thirdBtn}'
+        //     }
+        // });
+        // x.show();
+    }
+});
+Ext.define('DeleteThis.view.main.MainController', {
+    extend: 'Ext.app.ViewController',
+
+    alias: 'controller.main',
+
+    onDateSelect : function( datePicker, value, eOpts )
+    {
+        var me = this;
+        //12-Mar-2018
+        Ext.Ajax.request({
+            url : '/static_data/nested_data.json',
+            method : 'GET',
+            success : function( response )
+            {
+                var json = Ext.JSON.decode( response.responseText, true );
+                var countryData = json.data;
+                var countryList = [];
+                Ext.Array.forEach( countryData, function( country ){
+                    countryList.push( { name : country.country, value : country.country} );
+                });
+
+                me.getViewModel().get('countryStore').loadRawData( countryList );
+                console.log( json );
+            }
+        });
+        //console.log( value )
+    }
+});
+
+
+/*
+var panel = Ext.widget('panel',{
+            width : 300,
+            height : 900,
+            border : 1,
+            items : [
+                {
+                    xtype : 'button',
+                    bind : {
+                        text : '{firstBtn}'
+                    },
+                    listeners : {
+                        //click :'onclick',
+                        click : function()
+                        {
+                            debugger;
+                            //var me = this;
+                            var x = Ext.widget('window',{
+                                height : 400,
+                                width : 500,
+                                bind : {
+                                    title : '{thirdBtn}'
+                                }
+                            });
+                            x.show();
+                        },
+                        scope : this
+                    }
+                },
+                {
+                    xtype : 'container',
+                    items : [
+                        {
+                            xtype : 'button',
+                            bind : {
+                                text : '{secondBtn}'
+                            },
+                            listeners : {
+                                click : function()
+                                {
+                                    var innerBtn = Ext.widget('button',{
+                                        bind : {
+                                            text : '{thirdBtn}'
+                                        }
+                                    });
+                                    me.add( innerBtn );
+                                    //debugger;
+                                    //this.viewModel.notify();
+                                    //alert(innerBtn.getText());
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    xtype : 'textfield',
+                    bind : {
+                        value : '{firstName}'
+                    }
+                },
+                {
+                    xtype : 'textfield',
+                    bind : {
+                        value : '{lastName}'
+                    }
+                },
+                {
+                    xtype : 'displayfield',
+                    bind : {
+                        value : '{fullName}'
+                    }
+                },
+                {
+                    xtype : 'grid',
+                    bind : '{clientStore}',
+                    width : 300,
+                    height : 100,
+                    columns : [
+                        {
+                            text : 'Client Id',
+                            dataIndex : 'id',
+                            flex : 1
+                        },
+                        {
+                            text : 'Client Name',
+                            dataIndex : 'name',
+                            flex : 2
+                        }
+                    ],
+                    reference : 'clientGrid',
+                    publishes : 'title',
+                    title : 'Hey'
+                },
+                {
+                    xtype : 'displayfield',
+                    bind : {
+                        value : '{clientGrid.title}'
+                    }
+                },
+                {
+                    xtype : 'myComponent',
+                    bind : {
+                        randomValue : '{firstName}'
+                    },
+                    itemId : 'myComponent'
+                }
+            ]
+        });
+
+
+*/
+
