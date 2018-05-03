@@ -204,3 +204,59 @@ public class CredentialValidatorSvcsImpl implements ICredentialValidatorSvcs {
 
 }
 --------------------------------------------------------------------------
+//menu configuration
+{
+	"menu" : [
+		{
+			"title" : "Home",
+			"cardId" : "home"
+		},
+		{
+			"title" : "Runs",
+			"cardId" : "runs",
+			"subMenu" : [
+				{
+					"title" : "Create",
+					"cardId" : "runs_create"
+				},
+				{
+					"title" : "Search",
+					"cardId" : "runs_search",
+					"subMenu" : [
+						{
+							"title" : "Online",
+							"cardId" : "runs_search_online"
+						}
+					]
+				}
+			]
+		}
+	]
+}
+
+var configMenu = function( menuArray )
+{
+	var result = [];
+	for( var i = 0; i < menuArray.length; i++ )
+	{
+		var current = menuArray[i];
+		var menuItem = {
+			text : current.title,
+			cardId : current.cardId,
+			handler : function( m )
+			{
+				console.log( m );
+			}
+		}
+		if( current.hasOwnProperty("subMenu") )
+		{
+			menuItem.menu = configMenu( current.subMenu );
+		}
+		result.push( menuItem );
+	}
+	return result;
+}
+
+
+
+
