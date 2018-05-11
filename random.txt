@@ -651,4 +651,134 @@ var panel = Ext.widget('panel',{
 
 
 */
+---------------------------------------------------------
+Ext.define('DeleteThis.view.DynamicTabPanelViewController',{
+	extend : 'Ext.app.ViewController',
+	alias : 'controller.dynamicTabPanelViewController',
+	requires : [
+		'DeleteThis.view.DataGrid'
+	],
+	listen : {
+		controller : {
+			'*' : {
+				newTabRequest : 'onNewTabRequested'
+			}
+		}
+	},
+	init : function()
+	{
+		var me = this;
 
+	},
+	onNewTabRequested : function( args )
+	{
+		var me = this;
+		var view = me.getView();
+
+		var successFn = function( response )
+		{
+			var jsonResponse = Ext.JSON.decode( response.responseText , true );
+			if( jsonResponse )
+			{
+				if( jsonResponse.alcreport && jsonResponse.alcreport[0] !== null )
+				{
+					var newTab = Ext.widget('dataGrid', {
+						data : jsonResponse.alcreport,
+						width : 500,
+						height : 500,
+						title : 'Data Grid'
+					});
+					view.add( newTab );
+					view.setActiveTab( newTab );
+				}
+
+				//fire an event to tell the main tab page to switch to reports view
+				if( !view.isVisible())
+					view.show();
+
+			}
+		};
+		var failureFn = function( response )
+		{
+
+		};
+
+		//make ajax call to get the data
+		Ext.Ajax.request({
+			url : '/static_data/dynamic_data.json',
+			method : 'GET',
+			success : successFn,
+			failure : failureFn
+		});
+	}
+});
+
+//fields : [ "corp", "LOB", "industry", "EL", "q_99_97", "q_75____marginalPathAlignedWrt_(CORP,)" ] <- generated in this class and passed to the class
+//for each above field, generate a column whose title and dataIndex is the field
+//pass to store
+/*
+	{
+		"alcreport" : [
+			{
+				"corp" : "CORP",
+				"LOB" : null,
+				"industry" : null,
+				"EL" : 2.57,
+				"q_99_97" : 30.31667324,
+				"q_75____marginalPathAlignedWrt_(CORP,)" : null
+			}
+		]
+	}
+
+
+*/
+----------------------------------
+Ext.define('DeleteThis.view.DataGrid',{
+	extend : 'Ext.grid.Panel',
+	alias : 'widget.dataGrid',
+	requires : [],
+	data : undefined,
+	store : Ext.create('Ext.data.Store'),
+	viewConfig : {
+	    listeners : {
+	     refresh : function (dataview) {
+	      Ext.each(dataview.panel.columns, function (column) {
+	       if (column.autoSizeColumn === true)
+	        column.autoSize();
+	      })
+	     }
+	    }
+   	},
+	initComponent : function()
+	{
+		var me = this;
+		var data = me.config.data;
+		me.columns = me.generateColumns( data );
+		me.loadData( data );
+		me.callParent( arguments );
+	},
+	generateColumns : function( data )
+	{
+		var me = this;
+		var columnArr = [];
+		if( data.length > 0 )
+		{
+			var fields = Ext.Object.getKeys(data[0]);
+			Ext.each( fields, function( field ){
+				var column = Ext.widget('gridcolumn',{
+					text : field,
+					dataIndex : field,
+					align : 'center',
+					autoSizeColumn : true
+				});
+				columnArr.push( column );
+			});
+		}
+		return columnArr;
+	},
+	loadData : function( data )
+	{
+		var me = this;
+		me.getStore().setData( data );
+	}
+})
