@@ -257,6 +257,20 @@ var configMenu = function( menuArray )
 	return result;
 }
 
+/*
+*  Authorization Grant:
+*  +====================
+*  1. Register this app with Github and get a client id + client secret and set the redirect url
+*     GET http://localhost:3000/callback
+*     GitHub is one of the few providers that allow http redirect urls...
+*  2. Create a button on UI with the following link(using the client id, required scopes):
+*       https://github.com/login/oauth/authorize?scope=user:email&client_id=72d7345ff9484fd55ced
+*  3. User logs in and GitHub makes a GET call to above redirect URL with a code query param
+*       http://localhost:3000/callback?code=some_authorization_code
+*  4. Use this code + client id + client secret to make a POST call to the access token endpoint
+*     POST https://github.com/login/oauth/access_token
+*  5. Response will include the access token
 
+* */
 
 
